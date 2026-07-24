@@ -28,13 +28,13 @@ const menuItems = [
       {
         icon: "/user.png",
         label: "Patient Search",
-        href: "/admin/patients",
+        href: "/admin/patientsearch",
         visible: [Roles.ADMIN, Roles.EMPLOYEE],
       },
       {
         icon: "/lab.png",
         label: "Lab Results",
-        href: "/admin/",
+        href: "/admin/results",
         visible: [Roles.ADMIN, Roles.EMPLOYEE, Roles.PATIENT],
       },
       {

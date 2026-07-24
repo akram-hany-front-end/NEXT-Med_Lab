@@ -90,6 +90,15 @@ const Page = () => {
           </div>
           <div className="flex flex-col gap-1">
             <label
+              htmlFor="age"
+              className="text-xs text-gray-800 font-semibold"
+            >
+              Age
+            </label>
+            <input type="number" id="age" />
+          </div>
+          <div className="flex flex-col gap-1">
+            <label
               htmlFor="role"
               className="text-xs text-gray-800 font-semibold"
             >
