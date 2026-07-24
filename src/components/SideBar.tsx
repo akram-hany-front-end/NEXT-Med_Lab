@@ -40,8 +40,8 @@ const menuItems = [
       {
         icon: "/inventory.png",
         label: "Appointments",
-        href: "/results",
-        visible: [ Roles.EMPLOYEE, Roles.PATIENT],
+        href: "/admin/appointments",
+        visible: [ Roles.EMPLOYEE, Roles.PATIENT, Roles.ADMIN],
       },
     ],
   },
