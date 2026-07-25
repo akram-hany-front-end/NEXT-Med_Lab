@@ -35,19 +35,6 @@ const Page = () => {
 
     return h * 60 + m;
   };
-  // Book Handler Function
-  const slots: number[] = [];
-  const start = convertToMinutes(startTime);
-  const end = convertToMinutes(endTime);
-  const step = Number(duration);
-
-  let current = start;
-
-  while (current <= end) {
-    slots.push(current);
-    current += step;
-    console.log(slots);
-  }
   // Convert minutes to time Function
   const convertToTime = (minutes: number) => {
     const hours = Math.floor(minutes / 60);
@@ -57,21 +44,45 @@ const Page = () => {
     const formatedMins = String(mins).padStart(2, "0");
     return `${formatedHours}:${formatedMins}`;
   };
-  // formating slots Function
-  const formattedSlots = slots.map((slot) => convertToTime(slot));
-
-  setGeneratedSlots(formattedSlots);
 
   //   Handle Submit Function
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
-    console.log({
-      selectedDays,
-      startTime,
-      endTime,
-      duration,
-    });
+    // Book Handler Function
+    const slots: number[] = [];
+    const start = convertToMinutes(startTime);
+    const end = convertToMinutes(endTime);
+    const step = Number(duration);
+
+    let current = start;
+
+    while (current <= end) {
+      slots.push(current);
+      current += step;
+      console.log(slots);
+    }
+    // formating slots Function
+    
+
+    
+
+    if (selectedDays.length === 0) {
+      alert("Please select at least one work day.");
+      return;
+    }
+
+if (!startTime || !endTime) {
+      alert("Please select start and end time.");
+      return;
+    }
+
+    if (start >= end) {
+      alert("Start time must be before end time.");
+      return;
+    }
+    const formattedSlots = slots.map((slot) => convertToTime(slot));
+    setGeneratedSlots(formattedSlots);
   };
 
   return (
@@ -80,7 +91,7 @@ const Page = () => {
       className="flex gap-5 justify-center flex-col items-center p-5 "
     >
       <h1 className="text-3xl font-semibold text-blue-700">
-        Manage your Appointments
+        Manage your work Schedule
       </h1>
       {/* DAYS MANAGEMENT */}
       <div className="flex gap-1 items-start flex-col p-5">
@@ -139,11 +150,20 @@ const Page = () => {
       >
         Save Schedule
       </button>
-      {generatedSlots.map((slot) => (   
-        <span >{slot}</span>;
-      )
-     
-      )}
+      <div className="w-full max-w-3xl rounded-xl border p-6 mt-6">
+        <h2 className="text-xl font-semibold mb-4">Generated Time Slots</h2>
+
+        <div className="grid grid-cols-4 md:grid-cols-6 gap-3">
+          {generatedSlots.map((slot) => (
+            <div
+              key={slot}
+              className="border rounded-lg py-2 text-center bg-blue-50 text-blue-700 font-medium"
+            >
+              {slot}
+            </div>
+          ))}
+        </div>
+      </div>
     </form>
   );
 };

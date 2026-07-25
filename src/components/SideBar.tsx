@@ -39,9 +39,15 @@ const menuItems = [
       },
       {
         icon: "/inventory.png",
+        label: "workschedule",
+        href: "/admin/workschedule",
+        visible: [ Roles.EMPLOYEE, Roles.ADMIN ],
+      },
+      {
+        icon: "/inventory.png",
         label: "Appointments",
         href: "/admin/appointments",
-        visible: [ Roles.EMPLOYEE, Roles.PATIENT, Roles.ADMIN],
+        visible: [ Roles.EMPLOYEE, Roles.PATIENT, Roles.ADMIN ],
       },
     ],
   },
