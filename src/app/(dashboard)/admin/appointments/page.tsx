@@ -12,6 +12,7 @@ const days = [
   "Friday",
 ];
 const Page = () => {
+  const [generatedSlots, setGeneratedSlots] = useState<string[]>([]);
   const [selectedDays, setSelectedDays] = useState<string[]>([]);
   const [startTime, setStartTime] = useState("");
   const [endTime, setEndTime] = useState("");
@@ -24,17 +25,43 @@ const Page = () => {
       setSelectedDays([...selectedDays, day]);
     }
   };
-  // Book Handler Function
 
   // Time converter to minutes Function
   const convertToMinutes = (time: string) => {
     const [hours, minutes] = time.split(":");
-    
+
     const h = Number(hours);
     const m = Number(minutes);
- 
+
     return h * 60 + m;
   };
+  // Book Handler Function
+  const slots: number[] = [];
+  const start = convertToMinutes(startTime);
+  const end = convertToMinutes(endTime);
+  const step = Number(duration);
+
+  let current = start;
+
+  while (current <= end) {
+    slots.push(current);
+    current += step;
+    console.log(slots);
+  }
+  // Convert minutes to time Function
+  const convertToTime = (minutes: number) => {
+    const hours = Math.floor(minutes / 60);
+    const mins = minutes % 60;
+
+    const formatedHours = String(hours).padStart(2, "0");
+    const formatedMins = String(mins).padStart(2, "0");
+    return `${formatedHours}:${formatedMins}`;
+  };
+  // formating slots Function
+  const formattedSlots = slots.map((slot) => convertToTime(slot));
+
+  setGeneratedSlots(formattedSlots);
+
   //   Handle Submit Function
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -112,6 +139,11 @@ const Page = () => {
       >
         Save Schedule
       </button>
+      {generatedSlots.map((slot) => (   
+        <span >{slot}</span>;
+      )
+     
+      )}
     </form>
   );
 };
