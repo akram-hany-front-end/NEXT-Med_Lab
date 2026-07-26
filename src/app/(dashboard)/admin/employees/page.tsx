@@ -77,6 +77,7 @@ const Page = () => {
       status: "Suspended",
     },
   ];
+
   // useStates ("")
   const [currentPage, setCurrentPage] = useState(1);
   const [name, setName] = useState("");
@@ -93,6 +94,15 @@ const Page = () => {
   const indexOfLastEmployee = currentPage * employeesPerPage;
   const indexOfFirstEmployee = indexOfLastEmployee - employeesPerPage;
 
+  // reset form Function
+  const resetForm = () => {
+    setName("");
+    setEmail("");
+    setAge("");
+    setPhone("");
+    setStatus("Active");
+    setEditingId(null);
+  };
   // handle Search Function
   const filteredEmployees = employees.filter(
     (employee) =>
@@ -181,7 +191,7 @@ const Page = () => {
       <div className="flex flex-col gap-5 p-5 items-center">
         <div className="flex flex-col gap-2 w-full max-w-sm">
           <label htmlFor="search" className="text-sm font-medium text-gray-700">
-            Search Employee
+            Search Employees
           </label>
 
           <input
@@ -199,11 +209,7 @@ const Page = () => {
         <button
           onClick={() => {
             setOpen(!open);
-            setName("");
-            setEmail("");
-            setAge("");
-            setPhone("");
-            setStatus("Active");
+            resetForm();
           }}
         >
           <PlusCircle
@@ -219,17 +225,15 @@ const Page = () => {
             <button
               onClick={() => {
                 setOpen(false);
-                setName("");
-                setEmail("");
-                setAge("");
-                setPhone("");
-                setStatus("Active");
+                resetForm();
               }}
-              className="absolute top-2 right-2 cursor-pointer "
+              className="absolute top-2 right-2 cursor-pointer"
             >
               <XCircle size={22} className="text-red-500" />
             </button>
-            <h1 className="mt-4">Add You Employee</h1>
+            <h1 className="mt-4">
+              {editingId !== null ? "Edit" : "Add"} You Employee
+            </h1>
             <div className="flex flex-col">
               <label htmlFor="name">Name</label>
               <input
@@ -255,7 +259,7 @@ const Page = () => {
               <input
                 value={age}
                 onChange={(e) => setAge(e.target.value)}
-                type="text"
+                type="number"
                 id="age"
                 placeholder="Employee Age"
               />
