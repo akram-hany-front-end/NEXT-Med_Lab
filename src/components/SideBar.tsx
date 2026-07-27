@@ -26,12 +26,6 @@ const menuItems = [
         visible: [Roles.ADMIN],
       },
       {
-        icon: "/user.png",
-        label: "Patient Search",
-        href: "/admin/patientsearch",
-        visible: [Roles.ADMIN, Roles.EMPLOYEE],
-      },
-      {
         icon: "/lab.png",
         label: "Lab Results",
         href: "/admin/results",
