@@ -166,11 +166,7 @@ const Page = () => {
       const pages = Math.ceil((employees.length + 1) / employeesPerPage);
       setCurrentPage(pages);
     }
-    setName("");
-    setEmail("");
-    setAge("");
-    setPhone("");
-    setStatus("Active");
+   resetForm();
     setOpen(false);
   };
   // handle Edit function
