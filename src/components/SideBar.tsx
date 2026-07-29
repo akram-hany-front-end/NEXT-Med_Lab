@@ -10,7 +10,7 @@ const menuItems = [
       {
         icon: "/dashboard.png",
         label: "Dashboard",
-        href: "/dashboard",
+        href: "/admin",
         visible: [Roles.ADMIN],
       },
       {

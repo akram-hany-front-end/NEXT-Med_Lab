@@ -94,6 +94,7 @@ const Page = () => {
 }}} className="p-2 cursor-pointer bg-blue-500 rounded-md hover:bg-blue-400 transition text-white">
           Book Appointment
         </button>
+        
       </div>
     </div>
   );
