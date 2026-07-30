@@ -47,7 +47,7 @@ return (
             src=""
             alt=""
           />
-          <button type="button">submit</button>
+          <button type="submit">submit</button>
         </form>
       ) : (
         <div className="">
