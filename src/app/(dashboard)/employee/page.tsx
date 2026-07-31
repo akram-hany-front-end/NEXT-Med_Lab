@@ -1,6 +1,8 @@
 const page = () => {
   return (
-  <div className="">employee</div>
+  <div className="">
+    
+  </div>
     );
 };
 
