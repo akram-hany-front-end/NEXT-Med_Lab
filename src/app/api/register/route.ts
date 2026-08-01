@@ -28,8 +28,27 @@ export async function POST(req: NextRequest) {
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
+await User.create({
+  name,
+  email,
+  password: hashedPassword,
+  phone,
+  age,
+  role,
+  gender,
+});
+return NextResponse.json(
+  {
+    message: "User created successfully",
+  },
+  {
+    status: 201,
+  }
+);
+
 
   } catch (error) {
+    console.log("Error in user registration:", error);
     return NextResponse.json(
       { message: "Something went wrong" },
       { status: 500 },
