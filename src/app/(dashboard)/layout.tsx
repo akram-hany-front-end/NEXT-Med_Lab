@@ -1,16 +1,19 @@
 import SideBar from "@/components/SideBar";
 import "../globals.css";
+import { auth } from "@/auth";
 
-export default function DashboardLayout({
+export default async function DashboardLayout({
 children,
 }: Readonly<{
 children: React.ReactNode;
 }>) {
+      const session = await auth();
+      console.log(session?.user.role);
 return (
     <div className="h-screen flex">
     {/*LEFT*/}
     <div className="w-2/6 md:w-[8%] lg:w-[16%] xl:w-[14%]  ">
-<SideBar />
+<SideBar role={session?.user.role} />
     </div>
 
     {/*RIGHT*/}

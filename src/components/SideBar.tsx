@@ -1,94 +1,165 @@
+"use client";
+import {
+  LayoutDashboard,
+  CalendarDays,
+  Users,
+  UserRound,
+  FileText,
+  Clock3,
+  CircleUserRound,
+  LogOut,
+} from "lucide-react";
+import { signOut } from "next-auth/react";
 import { Role, Roles } from "@/lib/roles";
 import Image from "next/image";
 import Link from "next/link";
 
-const menuItems = [
+export const adminLinks = [
   {
-    logo: "/logo.png",
-    title: "MedLab Central",
-    items: [
-      {
-        icon: "/dashboard.png",
-        label: "Dashboard",
-        href: "/admin",
-        visible: [Roles.ADMIN],
-      },
-      {
-        icon: "/useronly.png",
-        label: "Patients",
-        href: "/admin/patients",
-        visible: [Roles.ADMIN],
-      },
-      {
-        icon: "/useronly.png",
-        label: "Employees",
-        href: "/admin/employees",
-        visible: [Roles.ADMIN],
-      },
-      {
-        icon: "/lab.png",
-        label: "Lab Results",
-        href: "/admin/results",
-        visible: [Roles.ADMIN, Roles.EMPLOYEE, Roles.PATIENT],
-      },
-      {
-        icon: "/inventory.png",
-        label: "workschedule",
-        href: "/admin/workschedule",
-        visible: [ Roles.EMPLOYEE, Roles.ADMIN ],
-      },
-      {
-        icon: "/inventory.png",
-        label: "Appointments",
-        href: "/admin/appointments",
-        visible: [ Roles.EMPLOYEE, Roles.PATIENT, Roles.ADMIN ],
-      },
-    ],
+    title: "Dashboard",
+    href: "/admin",
+    icon: LayoutDashboard,
+  },
+  {
+    title: "Appointments",
+    href: "/admin/appointments",
+    icon: CalendarDays,
+  },
+  {
+    title: "Employees",
+    href: "/admin/employees",
+    icon: Users,
+  },
+  {
+    title: "Patients",
+    href: "/admin/patients",
+    icon: UserRound,
+  },
+  {
+    title: "Results",
+    href: "/admin/results",
+    icon: FileText,
+  },
+  {
+    title: "Work Schedule",
+    href: "/admin/workschedule",
+    icon: Clock3,
+  },
+  {
+    title: "Profile",
+    href: "/admin/profile",
+    icon: CircleUserRound,
+  },
+];
+export const employeeLinks = [
+  {
+    title: "Dashboard",
+    href: "/employee",
+    icon: LayoutDashboard,
+  },
+  {
+    title: "Appointments",
+    href: "/employee/appointments",
+    icon: CalendarDays,
+  },
+  {
+    title: "Patients",
+    href: "/employee/patients",
+    icon: UserRound,
+  },
+  {
+    title: "Results",
+    href: "/employee/results",
+    icon: FileText,
+  },
+  {
+    title: "Profile",
+    href: "/employee/profile",
+    icon: CircleUserRound,
+  },
+];
+export const patientLinks = [
+  {
+    title: "Dashboard",
+    href: "/patient",
+    icon: LayoutDashboard,
+  },
+  {
+    title: "Appointments",
+    href: "/patient/appointments",
+    icon: CalendarDays,
+  },
+  {
+    title: "Results",
+    href: "/patient/results",
+    icon: FileText,
+  },
+  {
+    title: "Profile",
+    href: "/patient/profile",
+    icon: CircleUserRound,
   },
 ];
 
-const SideBar = () => {
-  const currentRole: Role = Roles.ADMIN; // For Test Only
-  return (
-    <div className=" text-sm bg-blue-600 h-full p-4 w-full">
-      {menuItems.map((i) => (
-        <div className="flex flex-col gap-2" key={i.title}>
-          <Link href="/">
-            <div className="flex flex-row gap-2 justify-center items-center">
-              <div className="">
-                <Image src={i.logo} alt="Logo" width={45} height={40} />
-              </div>
-              <span className="hidden lg:block text-white font-bold my-4 text-2xl">
-                {i.title}
-              </span>
-            </div>
-          </Link>
+type SideBarProps = {
+  role?: string;
+};
 
-          {i.items.map((item) => {
-            if (item.visible.includes(currentRole)) {
-              return (
-                <Link
-                  href={item.href}
-                  key={item.label}
-                  className="flex items-center justify-center lg:justify-start gap-4 text-white/70 py-2 rounded-md md:px-2 hover:bg-blue-500 transition"
-                >
-                  <Image
-                    width={16}
-                    height={16}
-                    alt={item.label}
-                    src={item.icon}
-                  />
-                  <span className="hidden lg:block text-xl font-semibold ">
-                    {item.label}
-                  </span>
-                </Link>
-              );
-            }
-          })}
-        </div>
-      ))}
+const SideBar = ({ role }: SideBarProps) => {
+  const handleLogout = async () => {
+    await signOut({
+      callbackUrl: "/sign-in",
+    });
+  };
+    console.log(role);
+
+  const menuItems =
+    role === Roles.ADMIN
+      ? adminLinks
+      : role === Roles.EMPLOYEE
+      ? employeeLinks
+      : patientLinks;
+
+  return (
+    <div className="bg-blue-600 h-full p-4">
+      <Link href="/" className="flex items-center gap-3 mb-8">
+        <Image src="/logo.png" alt="Logo" width={45} height={45} />
+
+        <span className="hidden lg:block text-2xl font-bold text-white">
+          MedLab Pro
+        </span>
+      </Link>
+
+      <div className="flex flex-col gap-2">
+        {menuItems.map((item) => {
+          const Icon = item.icon;
+
+          return (
+            <Link
+              key={item.title}
+              href={item.href}
+              className="flex items-center gap-4 rounded-lg px-3 py-3 text-white/80 hover:bg-blue-500 hover:text-white transition"
+            >
+              <Icon size={20} />
+
+              <span className="hidden lg:block font-medium">{item.title}</span>
+            </Link>
+          );
+        })}
+      </div>
+     <button
+  onClick={handleLogout}
+  type="button"
+  className="mt-6 flex w-full items-center gap-4 rounded-lg px-3 py-3 text-white/80 hover:bg-red-500 hover:text-white transition"
+>
+  <LogOut size={20} />
+
+  <span className="hidden lg:block font-medium">
+    Sign Out
+  </span>
+</button>
     </div>
   );
 };
 
-export default SideBar;
+export default SideBar

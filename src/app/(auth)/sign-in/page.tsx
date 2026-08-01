@@ -15,24 +15,20 @@ const Page = () => {
   const handleSubmit = async (
     e: React.FormEvent<HTMLFormElement>
   ) => {
-    // منع إعادة تحميل الصفحة
     e.preventDefault();
 
-    // التحقق من أن الحقول ليست فارغة
     if (!email || !password) {
       alert("Email and Password are required");
       return;
     }
 
     try {
-      // إرسال بيانات تسجيل الدخول إلى NextAuth
       const result = await signIn("credentials", {
         email,
         password,
-        redirect: false, // لا تجعل NextAuth ينقلني تلقائيًا
+        redirect: false, 
       });
 
-      // لو حصل خطأ في تسجيل الدخول
       if (!result || result.error) {
         alert(result?.error ?? "Invalid email or password");
         return;
@@ -52,9 +48,6 @@ const Page = () => {
       } else if (session.user.role === "Patient") {
         router.replace("/patient");
       }
-      // الانتقال للداشبورد
-      router.replace("/admin/");
-      router.refresh();
     } catch (error) {
       console.error(error);
       alert("Something went wrong");
