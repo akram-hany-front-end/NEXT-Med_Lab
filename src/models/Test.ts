@@ -2,7 +2,7 @@ import mongoose, { Schema } from "mongoose";
 
 const TestSchema = new Schema(
   {
-    name: {
+    testName: {
       type: String,
       required: true,
       unique: true,

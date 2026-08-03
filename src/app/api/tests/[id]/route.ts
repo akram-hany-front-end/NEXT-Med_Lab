@@ -10,8 +10,8 @@ export async function PATCH(request: Request,
     try {
         await connectDB();
         const { id } = await params;
-        const { name, price } = await request.json();
-        if (!name || !price) {
+        const { testName, price } = await request.json();
+        if (!testName || !price) {
             return NextResponse.json(
                 { message: "Name and Price are required" },
                 { status: 400 }
@@ -30,7 +30,7 @@ export async function PATCH(request: Request,
         const updatedTest = await Test.findByIdAndUpdate(
             id,
             {
-                name,
+                testName,
                 price,
             },
             {

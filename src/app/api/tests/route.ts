@@ -7,17 +7,17 @@ export async function POST(request: Request) {
     await connectDB();
 
     const body = await request.json();
-    const { name, price } = body;
+    const { testName, price } = body;
 
-    if (!name || !price) {
+    if (!testName || !price) {
       return NextResponse.json(
-        { message: "Name and Price are required" },
+        { message: " Test Name and Price are required" },
         { status: 400 }
       );
     }
 
     const test = await Test.create({
-      name,
+      testName,
       price,
     });
 
@@ -31,7 +31,7 @@ export async function POST(request: Request) {
       }
     );
   } catch (error) {
-    console.error(error);
+    console.error("POST TEST ERROR:",error);
 
     return NextResponse.json(
       {
