@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 const days = [
   "Saturday",
@@ -12,6 +12,7 @@ const days = [
   "Friday",
 ];
 const Page = () => {
+  const [scheduleId, setScheduleId] = useState("");
   const [generatedSlots, setGeneratedSlots] = useState<string[]>([]);
   const [selectedDays, setSelectedDays] = useState<string[]>([]);
   const [startTime, setStartTime] = useState("");
@@ -44,47 +45,99 @@ const Page = () => {
     const formatedMins = String(mins).padStart(2, "0");
     return `${formatedHours}:${formatedMins}`;
   };
+  const fetchSchedule = async () => {
+    const res = await fetch("/api/schedules");
+    const data = await res.json();
+    const schedule = data.schedules;
 
+    if (!schedule) return;
+
+    setScheduleId(schedule._id);
+    setSelectedDays(schedule.days);
+    setStartTime(schedule.startTime);
+    setEndTime(schedule.endTime);
+    setDuration(String(schedule.duration));
+    setGeneratedSlots(schedule.slots);
+    console.log(data)
+  }
   //   Handle Submit Function
-  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
+    // formating slots Function
+
+    if (selectedDays.length === 0) {
+      alert("Please select at least one work day.");
+      return;
+    }
     // Book Handler Function
-    const slots: number[] = [];
+
+    if (!startTime || !endTime) {
+      alert("Please select start and end time.");
+      return;
+    }
     const start = convertToMinutes(startTime);
     const end = convertToMinutes(endTime);
-    const step = Number(duration);
-
+    if (start >= end) {
+      alert("Start time must be before end time.");
+      return;
+    }
     let current = start;
+
+    const slots: number[] = [];
+
+    const step = Number(duration);
 
     while (current <= end) {
       slots.push(current);
       current += step;
       console.log(slots);
     }
-    // formating slots Function
-    
 
-    
-
-    if (selectedDays.length === 0) {
-      alert("Please select at least one work day.");
-      return;
-    }
-
-if (!startTime || !endTime) {
-      alert("Please select start and end time.");
-      return;
-    }
-
-    if (start >= end) {
-      alert("Start time must be before end time.");
-      return;
-    }
     const formattedSlots = slots.map((slot) => convertToTime(slot));
+
+    const url = scheduleId
+      ? `/api/schedules/${scheduleId}`
+      : "/api/schedules";
+
+    const method = scheduleId ? "PATCH" : "POST";
+
+    const res = await fetch(url, {
+      method,
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        days: selectedDays,
+        startTime,
+        endTime,
+        duration: Number(duration),
+        slots: formattedSlots,
+      }),
+    });
+    const data = await res.json();
+    if (!res.ok) {
+      alert(data.message);
+      return;
+    }
+    if (!scheduleId) {
+  setScheduleId(data.schedule._id);
+}
+
     setGeneratedSlots(formattedSlots);
+
+    alert("Schedule saved successfully");
+
+
   };
 
+  useEffect(() => {
+    const loadSchedule = async () => {
+      await fetchSchedule();
+    };
+
+    loadSchedule();
+  }, []);
   return (
     <form
       onSubmit={handleSubmit}
@@ -148,7 +201,7 @@ if (!startTime || !endTime) {
         type="submit"
         className="cursor-pointer px-4 py-2 text-white hover:bg-blue-500 transition bg-blue-600 rounded-md "
       >
-        Save Schedule
+        {scheduleId ? "Update Schedule" : "Save Schedule"}
       </button>
       <div className="w-full max-w-3xl rounded-xl border p-6 mt-6">
         <h2 className="text-xl font-semibold mb-4">Generated Time Slots</h2>

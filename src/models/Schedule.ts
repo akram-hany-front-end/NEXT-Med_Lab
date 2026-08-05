@@ -21,6 +21,10 @@ const ScheduleSchema = new Schema(
       type: Number,
       required: true,
     },
+        slots: {
+      type: [String],
+      required: true,
+    },
   },
   {
     timestamps: true,
