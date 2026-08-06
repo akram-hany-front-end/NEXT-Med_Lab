@@ -2,36 +2,49 @@ import mongoose, { Schema } from "mongoose";
 
 const AppointmentSchema = new Schema(
   {
-patient: {
-  type: Schema.Types.ObjectId,
-  ref: "User",
-  required: true,
-},
+    patient: {
+      type: Schema.Types.ObjectId,
+      ref: "User",
+      required: true,
+    },
 
-  test: {
-  type: Schema.Types.ObjectId,
-  ref: "Test",
-  required: true,
-},
+    test: {
+      type: Schema.Types.ObjectId,
+      ref: "Test",
+      required: true,
+    },
+
     date: {
       type: Date,
       required: true,
     },
+
     time: {
       type: String,
       required: true,
     },
- employee: {
-  type: Schema.Types.ObjectId,
-  ref: "User",
-    default: null,
-},
+
+    employee: {
+      type: Schema.Types.ObjectId,
+      ref: "User",
+      default: null,
+    },
+
+    status: {
+      type: String,
+      enum: ["booked", "completed", "cancelled"],
+      default: "booked",
+    },
   },
   {
     timestamps: true,
   }
 );
 
+AppointmentSchema.index(
+  { date: 1, time: 1 },
+  { unique: true }
+);
 const Appointment =
   mongoose.models.Appointment || mongoose.model("Appointment", AppointmentSchema);
 

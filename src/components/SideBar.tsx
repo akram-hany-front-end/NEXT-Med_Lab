@@ -8,6 +8,7 @@ import {
   Clock3,
   CircleUserRound,
   LogOut,
+  TestTube,
 } from "lucide-react";
 import { signOut } from "next-auth/react";
 import { Role, Roles } from "@/lib/roles";
@@ -44,6 +45,11 @@ export const adminLinks = [
     title: "Work Schedule",
     href: "/admin/workschedule",
     icon: Clock3,
+  },
+  {
+    title: "Tests",
+    href: "/admin/tests",
+    icon: TestTube,
   },
   {
     title: "Profile",

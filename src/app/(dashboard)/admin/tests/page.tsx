@@ -20,6 +20,7 @@ const Page = () => {
     const [currentPage, setCurrentPage] = useState(1);
 
     // FUNCTIONS
+
     // fetch tests from api
     const fetchTests = async () => {
         const res = await fetch("/api/tests");
@@ -35,6 +36,7 @@ const Page = () => {
 
         loadTests();
     }, []);
+    
     // handle search function
     const filteredResults = results.filter(
         (data) =>
@@ -237,7 +239,7 @@ const Page = () => {
                             ) : (currentResults.map((test) => (
                                 <tr key={test._id}>
                                     <td className="p-3">{test.testName}</td>
-                                    <td className="p-3">{test.price}</td>
+                                    <td className="p-3">{test.price} $</td>
                                     <td className="p-3 ">
                                         <div className="flex gap-3">
                                             <button onClick={() => handleDelete(test._id)}>
