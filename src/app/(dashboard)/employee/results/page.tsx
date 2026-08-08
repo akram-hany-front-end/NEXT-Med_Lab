@@ -1,170 +1,231 @@
 "use client";
 import { PlusCircle, SquarePen, Trash, XCircle } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
-type Results = {
-  id: number;
-  name: string;
-  test: string;
-  testResult: string;
+type Result = {
+  _id: string;
+
+  appointment: {
+    _id: string;
+    date: string;
+    time: string;
+
+    patient?: {
+      _id: string;
+      name: string;
+      email: string;
+    } | null;
+
+    patientName?: string | null;
+
+    test: {
+      _id: string;
+      testName: string;
+      price: number;
+    };
+  };
+
+  patient?: {
+    _id: string;
+    name: string;
+    email: string;
+  } | null;
+
+  employee: {
+    _id: string;
+    name: string;
+  };
+
+  result: string;
   comment: string;
 };
-
-const intialResults: Results[] = [
-  {
-    id: 1,
-    name: "Ahmed Ali",
-    test: "CBC",
-    testResult: "Normal",
-    comment: "All blood counts are within the normal range.",
-  },
-  {
-    id: 2,
-    name: "Mona Hassan",
-    test: "Blood Sugar",
-    testResult: "145 mg/dL",
-    comment: "Slightly elevated. Fasting test is recommended.",
-  },
-  {
-    id: 3,
-    name: "Omar Khaled",
-    test: "Vitamin D",
-    testResult: "22 ng/mL",
-    comment: "Vitamin D deficiency detected.",
-  },
-  {
-    id: 4,
-    name: "Nour El Din",
-    test: "Hemoglobin",
-    testResult: "11.8 g/dL",
-    comment: "Mild anemia is suspected.",
-  },
-  {
-    id: 5,
-    name: "Salma Adel",
-    test: "Cholesterol",
-    testResult: "210 mg/dL",
-    comment: "Borderline high cholesterol level.",
-  },
-  {
-    id: 6,
-    name: "Youssef Ibrahim",
-    test: "Creatinine",
-    testResult: "1.0 mg/dL",
-    comment: "Kidney function appears normal.",
-  },
-  {
-    id: 7,
-    name: "Fatma Mohamed",
-    test: "TSH",
-    testResult: "5.6 µIU/mL",
-    comment: "Suggestive of hypothyroidism. Clinical correlation advised.",
-  },
-  {
-    id: 8,
-    name: "Mahmoud Samy",
-    test: "Urinalysis",
-    testResult: "Normal",
-    comment: "No abnormal findings detected.",
-  },
-];
 
 const Page = () => {
   // useStates()
   const [open, setOpen] = useState(false);
-  const [name, setName] = useState("");
-  const [id, setId] = useState("");
-  const [test, setTest] = useState("");
+  const [appointments, setAppointments] = useState<
+    {
+      _id: string;
+
+      patient?: {
+        _id: string;
+        name: string;
+      } | null;
+
+      patientName?: string | null;
+
+      test: {
+        _id: string;
+        testName: string;
+      };
+
+      date: string;
+      time: string;
+    }[]
+  >([]);
   const [testResult, setTestResult] = useState("");
   const [search, setSearch] = useState("");
-  const [results, setResults] = useState(intialResults);
-  const [editingId, setEdingId] = useState<number | null>(null);
+  const [results, setResults] = useState<Result[]>([]);
+  const [editingId, setEdingId] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [comment, setComment] = useState("");
+  const [appointmentId, setAppointmentId] = useState("");
+  // FUNCTIONS
+  // GET results from API
+  const fetchedResults = async () => {
+    const res = await fetch("/api/result");
+    const data = await res.json();
+    setResults(data.results);
+  };
 
-// FUNCTIONS
+  const fetchedAppointments = async () => {
+    const res = await fetch("/api/appointments");
+    const data = await res.json();
+
+    setAppointments(data.appointments);
+  };
+  // load fetched data on page auto
+  useEffect(() => {
+    const load = async () => {
+      await fetchedResults();
+      await fetchedAppointments();
+    };
+    load();
+  }, []);
   // handle search function
-  const filteredResults = results.filter(
-    (result) =>
-      result.name.toLocaleLowerCase().includes(search.toLocaleLowerCase()) ||
-      result.test.toLocaleLowerCase().includes(search.toLocaleLowerCase()),
-  );
+  const filteredResults = results.filter((result) => {
+    const patientName = result.patient?.name || "";
+    const testName = result.appointment?.test?.testName || "";
+
+    return (
+      patientName.toLowerCase().includes(search.toLowerCase()) ||
+      testName.toLowerCase().includes(search.toLowerCase())
+    );
+  });
   // ResetForm Function
   const resetForm = () => {
     setComment("");
     setTestResult("");
-    setTest("");
-    setId("");
+    setAppointmentId("");
     setEdingId(null);
-    setName("");
   };
   // handle delete function
-  const handleDelete = (id: number) => {
-    const updatedResults = results.filter((e) => e.id !== id);
-    setResults(updatedResults);
-  };
+  const handleDelete = async (_id: string) => {
+    try {
+      const res = await fetch(`/api/result/${_id}`, {
+        method: "DELETE",
+      });
 
+      const data = await res.json();
+
+      if (!res.ok) {
+        alert(data.message || "Something went wrong");
+        return;
+      }
+
+      await fetchedResults();
+
+      alert("Result deleted successfully");
+    } catch (error) {
+      console.error(error);
+      alert("Something went wrong");
+    }
+  };
   // handle submit function
-  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    if (!name || !comment || !testResult || !id || !test) {
+
+    if (!testResult || !comment) {
       alert("Please fill all fields");
       return;
     }
-    if (editingId !== null) {
-      // Edit
-      setResults((prev) =>
-        prev.map((item) =>
-          editingId === item.id
-            ? {
-                ...item,
-                name,
-                test,
-                testResult,
-                comment,
-              }
-            : item,
-        ),
-      );
-      setEdingId(null);
-    } else {
-      // Add
-      const newResult = {
-        name,
-        id: Number(id),
-        test,
-        testResult,
-        comment,
-      };
-      setResults((prev) => [...prev, newResult]);
-      const pages = Math.ceil((results.length + 1) / resultsPerPage)
-      setCurrentPage(pages)
+
+    try {
+      // EDIT
+      if (editingId !== null) {
+        const res = await fetch(`/api/result/${editingId}`, {
+          method: "PATCH",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            result: testResult,
+            comment,
+          }),
+        });
+
+        const data = await res.json();
+
+        if (!res.ok) {
+          alert(data.message || "Something went wrong");
+          return;
+        }
+
+        await fetchedResults();
+
+        alert("Result updated successfully");
+
+        resetForm();
+        setOpen(false);
+
+        return;
+      }
+
+      // ADD
+      if (!appointmentId) {
+        alert("Please select an appointment");
+        return;
+      }
+
+      const res = await fetch("/api/result", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          appointment: appointmentId,
+          result: testResult,
+          comment,
+        }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        alert(data.message || "Something went wrong");
+        return;
+      }
+
+      await fetchedResults();
+
+      alert("Result added successfully");
+
+      resetForm();
+      setOpen(false);
+    } catch (error) {
+      console.error(error);
+      alert("Something went wrong");
     }
-    resetForm();
-    setOpen(false);
   };
 
-
   //handle edit function
-  const handleEdit = (result: Results) => {
+  const handleEdit = (result: Result) => {
     setOpen(true);
     setComment(result.comment);
-    setTestResult(result.testResult);
-    setId(String(result.id));
-    setTest(result.test);
-    setEdingId(result.id);
-    setName(result.name);
+    setTestResult(result.result);
+    setAppointmentId(result.appointment._id);
+    setEdingId(result._id);
   };
 
   // pagination
-  const resultsPerPage = 5; 
-  const indexOfLastPage =  currentPage * resultsPerPage 
-  const indexOfFirstPage = indexOfLastPage - resultsPerPage
-  const totalPages = Math.ceil(filteredResults.length / resultsPerPage)
+  const resultsPerPage = 5;
+  const indexOfLastPage = currentPage * resultsPerPage;
+  const indexOfFirstPage = indexOfLastPage - resultsPerPage;
+  const totalPages = Math.ceil(filteredResults.length / resultsPerPage);
   const currentResults = filteredResults.slice(
-  indexOfFirstPage,
-  indexOfLastPage,
-)
+    indexOfFirstPage,
+    indexOfLastPage,
+  );
   return (
     <div className=" flex flex-col">
       <h1 className="p-4 text-4xl font-semibold ">Results</h1>
@@ -199,75 +260,61 @@ const Page = () => {
         {open && (
           <form
             onSubmit={handleSubmit}
-            className="relative flex flex-col border border-cyan-600 rounded-md p-2 gap-2 "
+            className="relative flex flex-col border border-cyan-600 rounded-md p-4 gap-3"
           >
-            <button
-              type="button"
-              onClick={() => {
-                setOpen(false);
-                resetForm();
-              }}
-              className="absolute top-2 right-2 cursor-pointer "
-            >
-              <XCircle size={22} className="text-red-500" />
-            </button>
-            <h1 className="mt-4">
-              {editingId !== null ? "Edit" : "Add"} Test Result
-            </h1>
+            {/* Appointment */}
             <div className="flex flex-col">
-              <label htmlFor="name">Name</label>
-              <input
-                onChange={(e) => setName(e.target.value)}
-                type="text"
-                id="name"
-                value={name}
-                placeholder="Patient Name"
-              />
+              <label htmlFor="appointment">Appointment</label>
+
+              <select
+                id="appointment"
+                value={appointmentId}
+                onChange={(e) => setAppointmentId(e.target.value)}
+                disabled={editingId !== null}
+              >
+                <option value="">Select Appointment</option>
+
+                {appointments.map((appointment) => (
+                  <option key={appointment._id} value={appointment._id}>
+                    {appointment.patient?.name ||
+                      appointment.patientName ||
+                      "Unknown Patient"}{" "}
+                    - {appointment.test.testName} -{new Date(appointment.date).toLocaleDateString("en-GB")} -{" "}
+                    {appointment.time}
+                  </option>
+                ))}
+              </select>
             </div>
-            <div className="flex flex-col">
-              <label htmlFor="id">ID</label>
-              <input
-                value={id}
-                onChange={(e) => setId(e.target.value)}
-                type="number"
-                id="id"
-                placeholder="Patient ID"
-              />
-            </div>
-            <div className="flex flex-col">
-              <label htmlFor="test">Test</label>
-              <input
-                value={test}
-                onChange={(e) => setTest(e.target.value)}
-                type="text"
-                id="test"
-                placeholder="Test"
-              />
-            </div>
+
+            {/* Result */}
             <div className="flex flex-col">
               <label htmlFor="result">Result</label>
+
               <input
                 value={testResult}
                 onChange={(e) => setTestResult(e.target.value)}
                 type="text"
                 id="result"
-                placeholder="Test-Result"
+                placeholder="Test Result"
               />
             </div>
+
+            {/* Comment */}
             <div className="flex flex-col">
-              <label htmlFor="com">Comment</label>
+              <label htmlFor="comment">Comment</label>
+
               <input
                 value={comment}
                 onChange={(e) => setComment(e.target.value)}
                 type="text"
-                id="com"
+                id="comment"
                 placeholder="Comment"
               />
             </div>
 
             <button
-              className="cursor-pointer bg-cyan-600 p-3 rounded-full text-white hover:bg-cyan-500 self-end"
               type="submit"
+              className="cursor-pointer bg-cyan-600 p-3 rounded-full text-white"
             >
               {editingId !== null ? "Update" : "Submit"}
             </button>
@@ -288,41 +335,52 @@ const Page = () => {
             </tr>
           </thead>
           <tbody>
-            {
-currentResults.length === 0 ? (
-  <tr>
-    <td colSpan={6} className="text-center py-6 text-gray-500">
-      No Results Found!
-    </td>
-  </tr>
-) : (currentResults.map((result) => (
-              <tr key={result.id}>
-                <td className="p-3">{result.name}</td>
-                <td className="p-3">{result.test}</td>
-                <td className="p-3">{result.id}</td>
-                <td className="p-3">{result.testResult}</td>
-                <td className="p-3">{result.comment}</td>
-                <td className="p-3 ">
-                  <div className="flex gap-3">
-                    <button onClick={() => handleDelete(result.id)}>
-                      <Trash
-                        size={18}
-                        className="text-red-600 cursor-pointer"
-                      />
-                    </button>
-                    <button onClick={() => handleEdit(result)}>
-                      <SquarePen
-                        size={18}
-                        className="text-blue-600 cursor-pointer"
-                      />
-                    </button>
-                  </div>
+            {currentResults.length === 0 ? (
+              <tr>
+                <td colSpan={6} className="text-center py-6 text-gray-500">
+                  No Results Found!
                 </td>
               </tr>
-            )))
+            ) : (
+              currentResults.map((result) => (
+                <tr key={result._id} className="border-b">
+                  <td className="p-3">
+                  {result.patient?.name ||
+  result.appointment?.patient?.name ||
+  result.appointment?.patientName ||
+  "Unknown Patient"}
+                  </td>
+                  <td className="p-3">{result.appointment.test.testName}</td>
 
-            }
-            
+                  <td className="p-3">
+                    {result.patient?._id ||
+                      result.appointment?.patient?._id ||
+                      "-"}
+                  </td>
+                  <td className="p-3">{result.result}</td>
+
+                  <td className="p-3">{result.comment}</td>
+
+                  <td className="p-3">
+                    <div className="flex gap-3">
+                      <button onClick={() => handleDelete(result._id)}>
+                        <Trash
+                          size={18}
+                          className="text-red-600 cursor-pointer"
+                        />
+                      </button>
+
+                      <button onClick={() => handleEdit(result)}>
+                        <SquarePen
+                          size={18}
+                          className="text-blue-600 cursor-pointer"
+                        />
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              ))
+            )}
           </tbody>
         </table>
         <div className="flex gap-2 mt-5 justify-center">
