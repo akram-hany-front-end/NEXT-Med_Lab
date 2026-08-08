@@ -1,130 +1,92 @@
 "use client";
 import { Trash, PenBox, PlusCircle, XCircle } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+
+const days = [
+  "Saturday",
+  "Sunday",
+  "Monday",
+  "Tuesday",
+  "Wednesday",
+  "Thursday",
+  "Friday",
+];
+
 type Appointment = {
-  id: number;
-  patient: string;
-  test: string;
+  _id: string;
+
+  patient?: {
+    _id: string;
+    name: string;
+  } | null;
+
+  patientName?: string | null;
+
+  test: {
+    _id: string;
+    testName: string;
+  };
+
   date: string;
   time: string;
 };
-
 const Page = () => {
-  const tests = [
-    {
-      testName: "CBC",
-    },
-    {
-      testName: "PBC",
-    },
-    {
-      testName: "FBS",
-    },
-    {
-      testName: "TSH",
-    },
-    {
-      testName: "RBSs",
-    },
-    {
-      testName: "HCT",
-    },
-    {
-      testName: "MCV",
-    },
-    {
-      testName: "MCH",
-    },
-    {
-      testName: "MCHC",
-    },
-    {
-      testName: "PLT",
-    },
-    {
-      testName: "W.B.C",
-    },
-    {
-      testName: "ESR",
-    },
-    {
-      testName: "ACCP",
-    },
-    {
-      testName: "LFT",
-    },
-    {
-      testName: "KFT",
-    },
-    {
-      testName: "LP",
-    },
-    {
-      testName: "SGPT",
-    },
-    {
-      testName: "SGOT",
-    },
-    {
-      testName: "C",
-    },
-  ];
-  const thisWeakAppointments: Appointment[] = [
-    {
-      id: 1,
-      patient: "Ahmed Ali",
-      test: "CBC",
-      date: "2026-07-28",
-      time: "09:00 AM",
-    },
-    {
-      id: 2,
-      patient: "Salma Adel",
-      test: "Blood Sugar",
-      date: "2026-07-28",
-      time: "09:30 AM",
-    },
-    {
-      id: 3,
-      patient: "Omar Khaled",
-      test: "Vitamin D",
-      date: "2026-07-28",
-      time: "10:00 AM",
-    },
-    {
-      id: 4,
-      patient: "Fatma Mohamed",
-      test: "TSH",
-      date: "2026-07-28",
-      time: "10:30 AM",
-    },
-    {
-      id: 5,
-      patient: "Youssef Ibrahim",
-      test: "Urinalysis",
-      date: "2026-07-28",
-      time: "11:00 AM",
-    },
-    {
-      id: 6,
-      patient: "Nour El Din",
-      test: "Creatinine",
-      date: "2026-07-28",
-      time: "11:30 AM",
-    },
-  ];
-
   // useStates ("")
   const [currentPage, setCurrentPage] = useState(1);
   const [patient, setPatient] = useState("");
   const [time, setTime] = useState("");
+  const [selectedDay, setSelectedDay] = useState("");
   const [date, setDate] = useState("");
+  const [slots, setSlots] = useState<{
+    days: string[];
+    slots: string[];
+  } | null>(null);
   const [test, setTest] = useState("");
-  const [editingId, setEditingId] = useState<number | null>(null);
-  const [open, setOpen] = useState(false);
-  const [appointments, setAppointments] = useState(thisWeakAppointments);
-  const [search, setSearch] = useState("");
+  const [tests, setTests] = useState<
+    {
+      _id: string;
+      testName: string;
+      price: number;
+    }[]
+  >([]);
 
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [open, setOpen] = useState(false);
+  const [appointments, setAppointments] = useState<Appointment[]>([]);
+  const [search, setSearch] = useState("");
+  const todaySlots =
+    slots && slots.days.includes(selectedDay) ? slots.slots : [];
+  //fetch schedule from api
+
+  const fetchSchedule = async () => {
+    const res = await fetch("/api/schedules");
+    const data = await res.json();
+
+    setSlots(data.schedules);
+  };
+  //fetch appointments from api
+  const fetchAppointments = async () => {
+    const res = await fetch("/api/appointments");
+    const data = await res.json();
+
+    setAppointments(data.appointments);
+  };
+  //fetch tests from api
+  const fetchTests = async () => {
+    const res = await fetch("/api/tests");
+    const data = await res.json();
+    setTests(data.tests);
+  };
+  // to load the schedule and tests when the component mounts
+
+  useEffect(() => {
+    const load = async () => {
+      await fetchAppointments();
+      await fetchTests();
+      await fetchSchedule();
+    };
+    load();
+  }, []);
   const appointmentsPerPage = 5;
   const indexOfLastAppointment = currentPage * appointmentsPerPage;
   const indexOfFirstAppointment = indexOfLastAppointment - appointmentsPerPage;
@@ -132,71 +94,160 @@ const Page = () => {
   // reset form Function
   const resetForm = () => {
     setPatient("");
-    setDate("");
     setTime("");
     setTest("");
+    setSelectedDay("Saturday");
     setEditingId(null);
   };
+  // remove booked slots 
+  const bookedTimes = appointments
+  .filter((appointment) => {
+    const appointmentDate = new Date(appointment.date)
+      .toISOString()
+      .split("T")[0];
 
+    return appointmentDate === date;
+  })
+  .map((appointment) => appointment.time);
+
+const availableSlots = todaySlots.filter(
+  (slot) => !bookedTimes.includes(slot)
+);
   // handle Delete Function
-  const handleDelete = (id: number) => {
-    const updatedAppointments = appointments.filter((e) => e.id !== id);
-    setAppointments(updatedAppointments);
+  const handleDelete = async (_id: string) => {
+    try {
+      const res = await fetch(`/api/appointments/${_id}`, {
+        method: "DELETE",
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        alert(data.message || "Something went wrong!");
+        return;
+      }
+
+      alert("Appointment deleted successfully.");
+
+      await fetchAppointments();
+    } catch (error) {
+      console.error(error);
+      alert("Something went wrong!");
+    }
   };
+
   // handle Submit Function.
-  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+
     if (!patient || !date || !time || !test) {
       alert("Please fill all fields");
       return;
     }
-    if (editingId !== null) {
-      //Edit
-      setAppointments((prev) =>
-        prev.map((appointment) =>
-          appointment.id === editingId
-            ? {
-                ...appointment,
-                date,
-                test,
-                patient,
-                time,
-              }
-            : appointment,
-        ),
-      );
-      setEditingId(null);
-    } else {
-      //Add
-      const newAppointment = {
-        date,
-        id: Date.now(),
-        test,
-        patient,
-        time,
-      };
-      setAppointments((prev) => [...prev, newAppointment]);
-      const pages = Math.ceil((appointments.length + 1) / appointmentsPerPage);
-      setCurrentPage(pages);
+
+    try {
+      // EDIT
+      if (editingId !== null) {
+        const res = await fetch(`/api/appointments/${editingId}`, {
+          method: "PATCH",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            patientName: patient,
+            patient: null,
+            test,
+            date,
+            time,
+          }),
+        });
+
+        const data = await res.json();
+
+        if (!res.ok) {
+          alert(data.message || "Something went wrong!");
+          return;
+        }
+
+        alert("Appointment updated successfully.");
+
+        await fetchAppointments();
+
+        resetForm();
+        setOpen(false);
+        return;
+      }
+
+      // ADD
+      const res = await fetch("/api/appointments", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          patientName: patient,
+          test,
+          date,
+          time,
+        }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        alert(data.message || "Something went wrong!");
+        return;
+      }
+
+      alert("Appointment added successfully.");
+
+      await fetchAppointments();
+
+      resetForm();
+      setOpen(false);
+    } catch (error) {
+      console.error(error);
+      alert("Something went wrong!");
     }
-    resetForm();
-    setOpen(false);
   };
   // handle Edit Function
-  const handleEdit = (appointment: Appointment) => {
-    setEditingId(appointment.id);
-    setPatient(appointment.patient);
-    setTime(appointment.time);
-    setDate(appointment.date);
-    setTest(appointment.test);
-    setOpen(true);
-  };
-  // handle Search Function
-  const filteredAppointments = appointments.filter(
-    (appointment) =>
-      appointment.patient.toLowerCase().includes(search.toLowerCase()) ||
-      appointment.test.toLowerCase().includes(search.toLowerCase()),
+const handleEdit = (appointment: Appointment) => {
+  setEditingId(appointment._id);
+
+  setPatient(
+    appointment.patientName ||
+      appointment.patient?.name ||
+      "",
   );
+
+  setTime(appointment.time);
+  setDate(appointment.date);
+
+  const dayName = new Date(appointment.date).toLocaleDateString(
+    "en-US",
+    {
+      weekday: "long",
+    },
+  );
+
+  setSelectedDay(dayName);
+
+  setTest(appointment.test._id);
+
+  setOpen(true);
+};
+  // handle Search Function
+  const filteredAppointments = appointments.filter((appointment) => {
+    const patientName =
+      appointment.patient?.name || appointment.patientName || "";
+
+    const testName = appointment.test?.testName || "";
+
+    return (
+      patientName.toLowerCase().includes(search.toLowerCase()) ||
+      testName.toLowerCase().includes(search.toLowerCase())
+    );
+  });
   //  Pagination
   const currentAppointments = filteredAppointments.slice(
     indexOfFirstAppointment,
@@ -268,24 +319,52 @@ const Page = () => {
             </div>
             <div className="flex flex-col">
               <label htmlFor="date">Date</label>
+
               <input
-                value={date}
-                onChange={(e) => setDate(e.target.value)}
                 type="date"
                 id="date"
-                placeholder="Appointment Date"
+                value={date}
+                onChange={(e) => {
+                  setDate(e.target.value);
+
+                  const selectedDate = new Date(e.target.value);
+
+                  const dayName = selectedDate.toLocaleDateString("en-US", {
+                    weekday: "long",
+                  });
+
+                  setSelectedDay(dayName);
+                  setTime("");
+                }}
               />
+            </div>
+            <div className="flex flex-col">
+              <label>Day</label>
+              <input value={selectedDay} disabled readOnly />
             </div>
 
             <div className="flex flex-col">
               <label htmlFor="time">Time</label>
-              <input
+
+              <select
+                name="time"
+                id="time"
                 value={time}
                 onChange={(e) => setTime(e.target.value)}
-                type="time"
-                id="time"
-                placeholder="Appointment Time"
-              />
+                disabled={todaySlots.length === 0}
+              >
+                <option value="">
+                  {todaySlots.length === 0
+                    ? "No available slots"
+                    : "Select time"}
+                </option>
+
+                {availableSlots.map((slot) => (
+                  <option key={slot} value={slot}>
+                    {slot}
+                  </option>
+                ))}
+              </select>
             </div>
             <div className="flex flex-col">
               <label htmlFor="status">Test</label>
@@ -295,8 +374,10 @@ const Page = () => {
                 name="test"
                 id="test"
               >
+                <option value="">Choose test</option>
+
                 {tests.map((test) => (
-                  <option key={test.testName} value={test.testName}>
+                  <option key={test._id} value={test._id}>
                     {test.testName}
                   </option>
                 ))}
@@ -342,17 +423,22 @@ const Page = () => {
             ) : (
               currentAppointments.map((appointment) => (
                 <tr
-                  key={appointment.id}
+                  key={appointment._id}
                   className="border-b hover:bg-gray-50 transition"
                 >
-                  <td className="p-4">{appointment.patient}</td>
-                  <td className="p-4">{appointment.test}</td>
-                  <td className="p-4">{appointment.date}</td>
+                  <td className="p-4">
+                    {appointment.patient?.name || appointment.patientName}{" "}
+                  </td>
+                  <td className="p-4">{appointment.test.testName}</td>
+                  <td className="p-4">
+                    {" "}
+                    {new Date(appointment.date).toISOString().split("T")[0]}
+                  </td>
                   <td className="p-4">{appointment.time}</td>
 
                   <td className="p-4 text-center">
                     <button
-                      onClick={() => handleDelete(appointment.id)}
+                      onClick={() => handleDelete(appointment._id)}
                       className="cursor-pointer p-1 rounded-full text-red-500 hover:bg-red-300  transition"
                     >
                       <Trash size={18} />

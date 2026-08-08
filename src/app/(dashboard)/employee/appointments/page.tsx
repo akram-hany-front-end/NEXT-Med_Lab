@@ -56,6 +56,20 @@ const Page = () => {
   const [search, setSearch] = useState("");
   const todaySlots =
     slots && slots.days.includes(selectedDay) ? slots.slots : [];
+    // remove booked slots 
+    const bookedTimes = appointments
+  .filter((appointment) => {
+    const appointmentDate = new Date(appointment.date)
+      .toISOString()
+      .split("T")[0];
+
+    return appointmentDate === date;
+  })
+  .map((appointment) => appointment.time);
+
+const availableSlots = todaySlots.filter(
+  (slot) => !bookedTimes.includes(slot)
+);
   //fetch schedule from api
 
   const fetchSchedule = async () => {
@@ -345,7 +359,7 @@ const handleEdit = (appointment: Appointment) => {
                     : "Select time"}
                 </option>
 
-                {todaySlots.map((slot) => (
+                {availableSlots.map((slot) => (
                   <option key={slot} value={slot}>
                     {slot}
                   </option>
@@ -360,6 +374,7 @@ const handleEdit = (appointment: Appointment) => {
                 name="test"
                 id="test"
               >
+                <option value="">Choose test</option>
                 {tests.map((test) => (
                   <option key={test._id} value={test._id}>
                     {test.testName}
