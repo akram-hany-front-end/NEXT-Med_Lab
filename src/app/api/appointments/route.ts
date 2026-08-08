@@ -1,25 +1,38 @@
 import connectDB from "@/lib/connectDB";
 import Appointment from "@/models/Appointment";
 import { NextResponse } from "next/server";
+import { auth } from "@/auth";
+
 export async function POST(request: Request) {
     try {
         await connectDB();
 
-        const { patient, test, date, time, employee, status } =
-            await request.json();
+        const session = await auth();
 
-        if (
-            !patient ||
-            !test ||
-            !date ||
-            !time 
-            
-        ) {
+        if (!session?.user?.id) {
             return NextResponse.json(
-                { message: "All fields are required" },
+                { message: "Unauthorized" },
+                { status: 401 }
+            );
+        }
+
+        const {
+            patient,
+            patientName,
+            test,
+            date,
+            time,
+        } = await request.json();
+
+        if ((!patient && !patientName) || !test || !date || !time) {
+            return NextResponse.json(
+                {
+                    message: "Patient, test, date and time are required",
+                },
                 { status: 400 }
             );
         }
+
         const exists = await Appointment.findOne({
             date,
             time,
@@ -27,29 +40,29 @@ export async function POST(request: Request) {
 
         if (exists) {
             return NextResponse.json(
-                { message: "This appointment is already booked." },
+                {
+                    message: "This appointment is already booked.",
+                },
                 { status: 400 }
             );
         }
 
+        const appointment = await Appointment.create({
+            patient: patient || null,
+            patientName: patientName || null,
+            test,
+            date,
+            time,
 
-        const appointment = await Appointment.create(
-            {
-                patient,
-                test,
-                date,
-                time,
-                employee: employee || null,
-            });
+            employee: session.user.id,
+        });
 
         return NextResponse.json(
             {
                 message: "Appointment added successfully",
                 appointment,
             },
-            {
-                status: 201,
-            }
+            { status: 201 }
         );
     } catch (error) {
         console.error(error);
@@ -58,9 +71,7 @@ export async function POST(request: Request) {
             {
                 message: "Internal Server Error",
             },
-            {
-                status: 500,
-            }
+            { status: 500 }
         );
     }
 }
@@ -72,15 +83,13 @@ export async function GET() {
         const appointments = await Appointment.find()
             .populate("patient", "name")
             .populate("test", "testName")
-            .populate("employee", "name")
+            .populate("employee", "name");
 
         return NextResponse.json(
             {
                 appointments,
             },
-            {
-                status: 200,
-            }
+            { status: 200 }
         );
     } catch (error) {
         console.error(error);
@@ -89,9 +98,8 @@ export async function GET() {
             {
                 message: "Internal Server Error",
             },
-            {
-                status: 500,
-            }
+            { status: 500 }
         );
     }
 }
+

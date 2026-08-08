@@ -19,20 +19,46 @@ export async function PATCH(
             );
         }
 
-        const { patient, test, date, time, employee, status } =
-            await request.json();
+        const {
+            patient,
+            patientName,
+            test,
+            date,
+            time,
+            employee,
+            status,
+        } = await request.json();
+
+        if (!test || !date || !time) {
+            return NextResponse.json(
+                { message: "Test, date and time are required" },
+                { status: 400 },
+            );
+        }
+
+        // لو فيه patient مستخدم مسجل
+        // لازم يكون ObjectId صحيح
+        if (patient && !mongoose.Types.ObjectId.isValid(patient)) {
+            return NextResponse.json(
+                { message: "Invalid patient id" },
+                { status: 400 },
+            );
+        }
 
         const updatedAppointment = await Appointment.findByIdAndUpdate(
             id,
             {
-                patient,
+                patient: patient || null,
+                patientName: patientName || null,
                 test,
                 date,
                 time,
                 employee: employee || null,
+                ...(status && { status }),
             },
             {
-                returnDocument: "after",
+                new: true,
+                runValidators: true,
             },
         );
 
@@ -65,6 +91,7 @@ export async function PATCH(
         );
     }
 }
+
 export async function DELETE(
     request: Request,
     { params }: { params: Promise<{ id: string }> },
@@ -73,7 +100,7 @@ export async function DELETE(
         await connectDB();
 
         const { id } = await params;
-        console.log(id);
+
         if (!mongoose.Types.ObjectId.isValid(id)) {
             return NextResponse.json(
                 { message: "Invalid Appointment id" },
@@ -81,7 +108,6 @@ export async function DELETE(
             );
         }
 
-    
         const deletedAppointment = await Appointment.findByIdAndDelete(id);
 
         if (!deletedAppointment) {

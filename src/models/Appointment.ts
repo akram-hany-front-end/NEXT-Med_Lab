@@ -5,7 +5,13 @@ const AppointmentSchema = new Schema(
     patient: {
       type: Schema.Types.ObjectId,
       ref: "User",
-      required: true,
+      default: null,
+    },
+
+    patientName: {
+      type: String,
+      default: null,
+      trim: true,
     },
 
     test: {
@@ -45,7 +51,9 @@ AppointmentSchema.index(
   { date: 1, time: 1 },
   { unique: true }
 );
+
 const Appointment =
-  mongoose.models.Appointment || mongoose.model("Appointment", AppointmentSchema);
+  mongoose.models.Appointment ||
+  mongoose.model("Appointment", AppointmentSchema);
 
 export default Appointment;
