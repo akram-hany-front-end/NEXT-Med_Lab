@@ -134,7 +134,7 @@ const Page = () => {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        patient: patientId, // Assuming you have the patient ID available
+        patient: patientId, 
         test: selectedTest,
         date: getNextDate(selectedDay),
         time: selectedSlot,

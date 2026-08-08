@@ -1,14 +1,17 @@
 "use client";
 import { Trash, PenBox, PlusCircle, XCircle } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 type Appointment = {
-  id: number;
-  patient: string;
-  test: string;
+  _id: string;
+  patient: {
+    name: string;
+  };
+  test: {
+    testName: string;
+  };
   date: string;
   time: string;
 };
-
 const Page = () => {
   const tests = [
     {
@@ -70,62 +73,27 @@ const Page = () => {
     },
   ];
 
-  const thisWeakAppointments: Appointment[] = [
-    {
-      id: 1,
-      patient: "Ahmed Ali",
-      test: "CBC",
-      date: "2026-07-28",
-      time: "09:00 AM",
-    },
-    {
-      id: 2,
-      patient: "Salma Adel",
-      test: "Blood Sugar",
-      date: "2026-07-28",
-      time: "09:30 AM",
-    },
-    {
-      id: 3,
-      patient: "Omar Khaled",
-      test: "Vitamin D",
-      date: "2026-07-28",
-      time: "10:00 AM",
-    },
-    {
-      id: 4,
-      patient: "Fatma Mohamed",
-      test: "TSH",
-      date: "2026-07-28",
-      time: "10:30 AM",
-    },
-    {
-      id: 5,
-      patient: "Youssef Ibrahim",
-      test: "Urinalysis",
-      date: "2026-07-28",
-      time: "11:00 AM",
-    },
-    {
-      id: 6,
-      patient: "Nour El Din",
-      test: "Creatinine",
-      date: "2026-07-28",
-      time: "11:30 AM",
-    },
-  ];
-
   // useStates ("")
   const [currentPage, setCurrentPage] = useState(1);
   const [patient, setPatient] = useState("");
   const [time, setTime] = useState("");
   const [date, setDate] = useState("");
   const [test, setTest] = useState("");
-  const [editingId, setEditingId] = useState<number | null>(null);
+  const [editingId, setEditingId] = useState<string | null>(null);
   const [open, setOpen] = useState(false);
-  const [appointments, setAppointments] = useState(thisWeakAppointments);
+  const [appointments, setAppointments] = useState<Appointment[]>([]);
   const [search, setSearch] = useState("");
 
+  const fetchAppointments = async () => {
+    const res = await fetch("/api/appointments");
+    const data = await res.json();
+
+    setAppointments(data.appointments);
+  };
+  useEffect(() => {
+    const load = async () => await fetchAppointments();
+    load();
+  }, []);
   const appointmentsPerPage = 5;
   const indexOfLastAppointment = currentPage * appointmentsPerPage;
   const indexOfFirstAppointment = indexOfLastAppointment - appointmentsPerPage;
@@ -140,63 +108,116 @@ const Page = () => {
   };
 
   // handle Delete Function
-const handleDelete = (id: number) => {
-    const updatedAppointments = appointments.filter((e) => e.id !== id);
-    setAppointments(updatedAppointments);
-};
-  // handle Submit Function.
-const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    if (!patient || !date || !time || !test) {
-      alert("Please fill all fields");
+  const handleDelete = async (_id: string) => {
+  try {
+    const res = await fetch(`/api/appointments/${_id}`, {
+      method: "DELETE",
+    });
+
+    const data = await res.json();
+
+    if (!res.ok) {
+      alert(data.message || "Something went wrong!");
       return;
     }
+
+    alert("Appointment deleted successfully.");
+
+    await fetchAppointments();
+  } catch (error) {
+    console.error(error);
+    alert("Something went wrong!");
+  }
+};
+
+  // handle Submit Function.
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+  e.preventDefault();
+
+  if (!patient || !date || !time || !test) {
+    alert("Please fill all fields");
+    return;
+  }
+
+  try {
+    // EDIT
     if (editingId !== null) {
-      //Edit
-      setAppointments((prev) =>
-        prev.map((appointment) =>
-          appointment.id === editingId
-            ? {
-                ...appointment,
-                date,
-                test,
-                patient,
-                time,
-              }
-            : appointment,
-        ),
-      );
-      setEditingId(null);
-    } else {
-      //Add
-      const newAppointment = {
-        date,
-        id: Date.now(),
-        test,
-        patient,
-        time,
-      };
-      setAppointments((prev) => [...prev, newAppointment]);
-      const pages = Math.ceil((appointments.length + 1) / appointmentsPerPage);
-      setCurrentPage(pages);
+      const res = await fetch(`/api/appointments/${editingId}`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          patient,
+          test,
+          date,
+          time,
+        }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        alert(data.message || "Something went wrong!");
+        return;
+      }
+
+      alert("Appointment updated successfully.");
+
+      await fetchAppointments();
+
+      resetForm();
+      setOpen(false);
+      return;
     }
+
+    // ADD
+    const res = await fetch("/api/appointments", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        patient,
+        test,
+        date,
+        time,
+      }),
+    });
+
+    const data = await res.json();
+
+    if (!res.ok) {
+      alert(data.message || "Something went wrong!");
+      return;
+    }
+
+    alert("Appointment added successfully.");
+
+    await fetchAppointments();
+
     resetForm();
     setOpen(false);
-  };
+  } catch (error) {
+    console.error(error);
+    alert("Something went wrong!");
+  }
+};
   // handle Edit Function
   const handleEdit = (appointment: Appointment) => {
-    setEditingId(appointment.id);
-    setPatient(appointment.patient);
+    setEditingId(appointment._id);
+    setPatient(appointment.patient.name);
     setTime(appointment.time);
     setDate(appointment.date);
-    setTest(appointment.test);
+    setTest(appointment.test.testName);
     setOpen(true);
   };
   // handle Search Function
+
   const filteredAppointments = appointments.filter(
     (appointment) =>
-      appointment.patient.toLowerCase().includes(search.toLowerCase()) ||
-      appointment.test.toLowerCase().includes(search.toLowerCase()),
+      appointment.patient.name.toLowerCase().includes(search.toLowerCase()) ||
+      appointment.test.testName.toLowerCase().includes(search.toLowerCase()),
   );
   //  Pagination
   const currentAppointments = filteredAppointments.slice(
@@ -343,17 +364,17 @@ const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
             ) : (
               currentAppointments.map((appointment) => (
                 <tr
-                  key={appointment.id}
+                  key={appointment._id}
                   className="border-b hover:bg-gray-50 transition"
                 >
-                  <td className="p-4">{appointment.patient}</td>
-                  <td className="p-4">{appointment.test}</td>
+                  <td className="p-4">{appointment.patient.name}</td>
+                  <td className="p-4">{appointment.test.testName}</td>
                   <td className="p-4">{appointment.date}</td>
                   <td className="p-4">{appointment.time}</td>
 
                   <td className="p-4 text-center">
                     <button
-                      onClick={() => handleDelete(appointment.id)}
+                      onClick={() => handleDelete(appointment._id)}
                       className="cursor-pointer p-1 rounded-full text-red-500 hover:bg-red-300  transition"
                     >
                       <Trash size={18} />
