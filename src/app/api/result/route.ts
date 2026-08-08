@@ -3,21 +3,28 @@ import Appointment from "@/models/Appointment";
 import Result from "@/models/Result";
 import { NextResponse } from "next/server";
 import mongoose from "mongoose";
-
+import { auth } from "@/auth";
 // GET ALL RESULTS
 export async function GET() {
   try {
     await connectDB();
+
 
     const results = await Result.find()
       .populate("patient", "name email")
       .populate("employee", "name")
       .populate({
         path: "appointment",
-        populate: {
-          path: "test",
-          select: "testName price",
-        },
+        populate: [
+          {
+            path: "patient",
+            select: "name email",
+          },
+          {
+            path: "test",
+            select: "testName price",
+          },
+        ],
       })
       .sort({ createdAt: -1 });
 
@@ -47,23 +54,32 @@ export async function GET() {
 export async function POST(request: Request) {
   try {
     await connectDB();
+    const session = await auth();
 
-    const {
+    if (!session?.user?.id) {
+      return NextResponse.json(
+        { message: "Unauthorized" },
+        { status: 401 }
+      );
+    }
+        const employee = session.user.id;
+
+     const {
       appointment,
       result,
       comment,
-      employee,
     } = await request.json();
 
     // Validation
-    if (!appointment || !result || !employee) {
+   
+    if (!appointment || !result) {
       return NextResponse.json(
         {
-          message: "Appointment, result and employee are required",
+          message: "Appointment and result are required",
         },
         {
           status: 400,
-        },
+        }
       );
     }
 
@@ -113,13 +129,13 @@ export async function POST(request: Request) {
     }
 
     // Create result
-    const newResult = await Result.create({
-      appointment,
-      patient: appointmentData.patient || null,
-      employee,
-      result,
-      comment: comment || "",
-    });
+  const newResult = await Result.create({
+  appointment,
+  patient: appointmentData.patient,
+  employee,
+  result,
+  comment: comment || "",
+});
 
     // Populate response
     await newResult.populate([
