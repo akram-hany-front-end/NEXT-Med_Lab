@@ -14,9 +14,12 @@ export async function GET() {
     if (!session?.user?.id) {
       return NextResponse.json(
         { message: "Unauthorized" },
-        { status: 401 }
+        { status: 401 },
       );
     }
+
+    // Make sure the Test model is registered
+    void Test;
 
     // =========================
     // DATE RANGE
@@ -24,6 +27,7 @@ export async function GET() {
 
     const now = new Date();
 
+    // Today
     const startOfDay = new Date(
       now.getFullYear(),
       now.getMonth(),
@@ -31,7 +35,7 @@ export async function GET() {
       0,
       0,
       0,
-      0
+      0,
     );
 
     const endOfDay = new Date(
@@ -41,11 +45,11 @@ export async function GET() {
       23,
       59,
       59,
-      999
+      999,
     );
 
     // =========================
-    // START OF WEEK
+    // THIS WEEK
     // Sunday = 0
     // =========================
 
@@ -77,7 +81,7 @@ export async function GET() {
       .sort({ time: 1 });
 
     // =========================
-    // THIS WEEK COUNT
+    // THIS WEEK APPOINTMENTS
     // =========================
 
     const weeklyAppointments = await Appointment.countDocuments({
@@ -98,18 +102,35 @@ export async function GET() {
       role: "Employee",
     });
 
+    // =========================
+    // PATIENTS COUNT
+    // =========================
+
+    const patientsCount = await User.countDocuments({
+      role: "Patient",
+    });
+
+    // =========================
+    // TOTAL APPOINTMENTS
+    // =========================
+
     const totalAppointments = await Appointment.countDocuments();
+
+    // =========================
+    // RESPONSE
+    // =========================
 
     return NextResponse.json(
       {
         todayAppointments,
         weeklyAppointments,
         employeesCount,
+        patientsCount,
         totalAppointments,
       },
       {
         status: 200,
-      }
+      },
     );
   } catch (error) {
     console.error("DASHBOARD API ERROR:", error);
@@ -120,7 +141,7 @@ export async function GET() {
       },
       {
         status: 500,
-      }
+      },
     );
   }
 }

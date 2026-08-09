@@ -1,4 +1,5 @@
 import mongoose, { Schema } from "mongoose";
+import "./Test";
 
 const AppointmentSchema = new Schema(
   {
@@ -44,12 +45,12 @@ const AppointmentSchema = new Schema(
   },
   {
     timestamps: true,
-  }
+  },
 );
 
 AppointmentSchema.index(
   { date: 1, time: 1 },
-  { unique: true }
+  { unique: true },
 );
 
 const Appointment =
