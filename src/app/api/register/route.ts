@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
 import connectDB from "@/lib/connectDB";
 import User from "@/models/User";
-
+import { auth } from "@/auth";
 export async function POST(req: NextRequest) {
   try {
     await connectDB();
@@ -54,4 +54,48 @@ return NextResponse.json(
       { status: 500 },
     );
   }
+}
+
+
+
+
+
+export async function GET() {
+try {
+await connectDB();
+
+const session = await auth();
+
+if (!session?.user?.id) {
+  return NextResponse.json(
+    { message: "Unauthorized" },
+    { status: 401 }
+  );
+}
+
+const user = await User.findById(session.user.id).select("-password");
+
+if (!user) {
+  return NextResponse.json(
+    { message: "User not found" },
+    { status: 404 }
+  );
+}
+
+return NextResponse.json(
+  {
+    user,
+  },
+  { status: 200 }
+);
+
+} catch (error) {
+console.error("GET PROFILE ERROR:", error);
+
+return NextResponse.json(
+  { message: "Internal Server Error" },
+  { status: 500 }
+);
+
+}
 }
