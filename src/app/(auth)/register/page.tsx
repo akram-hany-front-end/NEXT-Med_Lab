@@ -55,7 +55,6 @@ const handleSubmit = async (
       body: JSON.stringify(newUser),
     });
 
-    // اقرأ البيانات مرة واحدة
     const data = await response.json();
 
     if (response.ok) {
@@ -167,16 +166,21 @@ const router = useRouter();
             />
           </div>
           <div className="flex flex-col gap-1">
-            <label
-              htmlFor="age"
-              className="text-xs text-gray-800 font-semibold"
-            >
-              Age
-            </label>
-            <input type="number" id="age" value={age} 
-              onChange={(e) => setAge(e.target.value)}
-            />
-          </div>
+  <label
+    htmlFor="age"
+    className="text-xs text-gray-800 font-semibold"
+  >
+    Age
+  </label>
+
+  <input
+    type="number"
+    id="age"
+    value={age}
+    onChange={(e) => setAge(e.target.value)}
+    className="[appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
+  />
+</div>
           <div className="flex flex-col gap-1">
             <label
               htmlFor="role"
@@ -185,6 +189,7 @@ const router = useRouter();
               Role
             </label>
             <select value={role} onChange={(e)=> setRole(e.target.value)} name="ginder" id="role">
+              <option>Role</option>
               <option value="Employee">Employee</option>
               <option value="Patient">Patient</option>
             </select>
@@ -197,6 +202,7 @@ const router = useRouter();
               Ginder
             </label>
             <select value={gender} onChange={(e)=> setGender(e.target.value)} name="ginder" id="ginder">
+              <option>Ginder</option>
               <option value="Male">Male</option>
               <option value="Female">Female</option>
             </select>
