@@ -1,82 +1,18 @@
 "use client";
 import { PlusCircle, SquarePen, Trash, XCircle } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 type Employee = {
-  id: number;
+  _id: string;
   name: string;
   email: string;
-  age: number;
+  age: string | number;
   phone: string;
-  status: string;
+  role: string;
+  gender: string;
 };
 const Page = () => {
-  const initialEmployees: Employee[] = [
-    {
-      id: 1,
-      name: "Ahmed Ali",
-      email: "ahmed.ali@nextlab.com",
-      age: 28,
-      phone: "01012345678",
-      status: "Active",
-    },
-    {
-      id: 2,
-      name: "Mona Hassan",
-      email: "mona.hassan@nextlab.com",
-      age: 31,
-      phone: "01123456789",
-      status: "Active",
-    },
-    {
-      id: 3,
-      name: "Omar Khaled",
-      email: "omar.khaled@nextlab.com",
-      age: 26,
-      phone: "01234567890",
-      status: "On Leave",
-    },
-    {
-      id: 4,
-      name: "Nour El Din",
-      email: "nour.eldin@nextlab.com",
-      age: 35,
-      phone: "01567891234",
-      status: "Active",
-    },
-    {
-      id: 5,
-      name: "Salma Adel",
-      email: "salma.adel@nextlab.com",
-      age: 24,
-      phone: "01098765432",
-      status: "Inactive",
-    },
-    {
-      id: 6,
-      name: "Youssef Ibrahim",
-      email: "youssef.ibrahim@nextlab.com",
-      age: 30,
-      phone: "01187654321",
-      status: "Active",
-    },
-    {
-      id: 7,
-      name: "Fatma Mohamed",
-      email: "fatma.mohamed@nextlab.com",
-      age: 27,
-      phone: "01211223344",
-      status: "Active",
-    },
-    {
-      id: 8,
-      name: "Mahmoud Samy",
-      email: "mahmoud.samy@nextlab.com",
-      age: 33,
-      phone: "01522334455",
-      status: "Suspended",
-    },
-  ];
+
 
   // useStates ("")
   const [currentPage, setCurrentPage] = useState(1);
@@ -85,22 +21,45 @@ const Page = () => {
   const [age, setAge] = useState("");
   const [search, setSearch] = useState("");
   const [phone, setPhone] = useState("");
-  const [status, setStatus] = useState("Active");
-  const [editingId, setEditingId] = useState<number | null>(null);
-  const [employees, setEmployees] = useState(initialEmployees);
+const [editingId, setEditingId] = useState<string | null>(null);
+  const [employees, setEmployees] = useState<Employee[]>([]);
   const [open, setOpen] = useState(false);
 
   const employeesPerPage = 5;
   const indexOfLastEmployee = currentPage * employeesPerPage;
   const indexOfFirstEmployee = indexOfLastEmployee - employeesPerPage;
 
+  // get employees 
+  const fetchEmployees = async () => {
+    try {
+      const res = await fetch("/api/users?role=Employee");
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        alert(data.message || "Failed to fetch employees");
+        return;
+      }
+
+      setEmployees(data.users);
+    } catch (error) {
+      console.error(error);
+      alert("Failed to fetch employees");
+    }
+  };
+  useEffect(() => {
+    const load = async () => {
+      await fetchEmployees();
+
+    }
+    load()
+  }, []);
   // reset form Function
   const resetForm = () => {
     setName("");
     setEmail("");
     setAge("");
     setPhone("");
-    setStatus("Active");
     setEditingId(null);
   };
   // handle Search Function
@@ -116,69 +75,82 @@ const Page = () => {
   );
   const totalPages = Math.ceil(filteredEmployees.length / employeesPerPage);
   // handle Delete Function
-  const handleDelete = (id: number) => {
-    const updatedEmployees = employees.filter((e) => e.id !== id);
+  const handleDelete = async (id: string) => {
+  try {
+    const res = await fetch(`/api/users/${id}`, {
+      method: "DELETE",
+    });
 
-    setEmployees(updatedEmployees);
+    const data = await res.json();
 
-    const pages = Math.ceil(updatedEmployees.length / employeesPerPage);
-
-    if (currentPage > pages) {
-      setCurrentPage(pages || 1);
-    }
-  };
-  // handle Submit Function
-
-  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    if (!name || !email || !age || !phone) {
-      alert("Please fill all fields");
+    if (!res.ok) {
+      alert(data.message || "Failed to delete employee");
       return;
     }
-    if (editingId !== null) {
-      //Edit
-      setEmployees((prev) =>
-        prev.map((employee) =>
-          employee.id === editingId
-            ? {
-                ...employee,
-                name,
-                email,
-                age: Number(age),
-                phone,
-                status,
-              }
-            : employee,
-        ),
-      );
-      setEditingId(null);
-    } else {
-      //Add
-      const newEmployee = {
-        id: Date.now(),
+
+    await fetchEmployees();
+
+    alert("Employee deleted successfully");
+  } catch (error) {
+    console.error(error);
+    alert("Something went wrong");
+  }
+};
+  // handle Submit Function
+
+  const handleSubmit = async (
+  e: React.FormEvent<HTMLFormElement>
+) => {
+  e.preventDefault();
+
+  if (!name || !email || !age || !phone) {
+    alert("Please fill all fields");
+    return;
+  }
+
+  if (!editingId) return;
+
+  try {
+    const res = await fetch(`/api/users/${editingId}`, {
+      method: "PATCH",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
         name,
         email,
         age: Number(age),
         phone,
-        status,
-      };
-      setEmployees((prev) => [...prev, newEmployee]);
-      const pages = Math.ceil((employees.length + 1) / employeesPerPage);
-      setCurrentPage(pages);
+      }),
+    });
+
+    const data = await res.json();
+
+    if (!res.ok) {
+      alert(data.message || "Failed to update employee");
+      return;
     }
-   resetForm();
+
+    await fetchEmployees();
+
+    resetForm();
     setOpen(false);
-  };
+
+    alert("Employee updated successfully");
+  } catch (error) {
+    console.error(error);
+    alert("Something went wrong");
+  }
+};
   // handle Edit function
   const handleEdit = (employee: Employee) => {
-    setEditingId(employee.id);
-    setEmail(employee.email);
-    setName(employee.name);
-    setAge(String(employee.age));
-    setPhone(employee.phone);
-    setStatus(employee.status);
-    setOpen(true);
-  };
+  setEditingId(employee._id);
+  setEmail(employee.email);
+  setName(employee.name);
+  setAge(String(employee.age));
+  setPhone(employee.phone);
+  setOpen(true);
+};
 
   return (
     <div className=" flex flex-col">
@@ -202,17 +174,7 @@ const Page = () => {
             className="rounded-lg border border-gray-300 px-4 py-2 outline-none transition-all duration-200 focus:border-blue-600 focus:ring-2 focus:ring-cyan-200"
           />
         </div>
-        <button
-          onClick={() => {
-            setOpen(!open);
-            resetForm();
-          }}
-        >
-          <PlusCircle
-            size={25}
-            className="hover:text-cyan-700 transition cursor-pointer text-yellow-600"
-          />
-        </button>
+      
         {open && (
           <form
             onSubmit={handleSubmit}
@@ -270,20 +232,7 @@ const Page = () => {
                 placeholder="Employee Phone"
               />
             </div>
-            <div className="flex flex-col">
-              <label htmlFor="status">Status</label>
-              <select
-                value={status}
-                onChange={(e) => setStatus(e.target.value)}
-                name="status"
-                id="status"
-              >
-                <option value="Active">Active</option>
-                <option value="On Leave">On Leave</option>
-                <option value="Inactive">Inactive</option>
-                <option value="Suspended">Suspended</option>
-              </select>
-            </div>
+            
             <button
               className="cursor-pointer bg-cyan-600 p-3 rounded-full text-white hover:bg-cyan-500 self-end"
               type="submit"
@@ -314,32 +263,32 @@ const Page = () => {
                 </td>
               </tr>
             ) : (
-              currentEmployees.map((employee) => (
-                <tr key={employee.id}>
-                  <td className="p-3">{employee.name}</td>
-                  <td className="p-3">{employee.email}</td>
-                  <td className="p-3">{employee.age}</td>
-                  <td className="p-3">{employee.phone}</td>
-                  <td className="p-3">{employee.status}</td>
-                  <td className="p-3 ">
-                    <div className="flex gap-3">
-                      <button onClick={() => handleDelete(employee.id)}>
-                        <Trash
-                          size={18}
-                          className="text-red-600 cursor-pointer"
-                        />
-                      </button>
-                      <button onClick={() => handleEdit(employee)}>
-                        <SquarePen
-                          size={18}
-                          className="text-blue-600 cursor-pointer"
-                        />
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              ))
-            )}
+            currentEmployees.map((employee) => (
+  <tr key={employee._id}>
+    <td className="p-3">{employee.name}</td>
+    <td className="p-3">{employee.email}</td>
+    <td className="p-3">{employee.age}</td>
+    <td className="p-3">{employee.phone}</td>
+
+    <td className="p-3">
+      <div className="flex gap-3">
+        <button onClick={() => handleDelete(employee._id)}>
+          <Trash
+            size={18}
+            className="text-red-600 cursor-pointer"
+          />
+        </button>
+
+        <button onClick={() => handleEdit(employee)}>
+          <SquarePen
+            size={18}
+            className="text-blue-600 cursor-pointer"
+          />
+        </button>
+      </div>
+    </td>
+  </tr>
+)))}
           </tbody>
         </table>{" "}
         <div className="flex gap-2 mt-5 justify-center">
@@ -347,9 +296,8 @@ const Page = () => {
             <button
               key={i}
               onClick={() => setCurrentPage(i + 1)}
-              className={`px-3 py-1 rounded ${
-                currentPage === i + 1 ? "bg-cyan-600 text-white" : "bg-gray-200"
-              }`}
+              className={`px-3 py-1 rounded ${currentPage === i + 1 ? "bg-cyan-600 text-white" : "bg-gray-200"
+                }`}
             >
               {i + 1}
             </button>

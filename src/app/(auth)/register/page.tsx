@@ -185,7 +185,6 @@ const router = useRouter();
               Role
             </label>
             <select value={role} onChange={(e)=> setRole(e.target.value)} name="ginder" id="role">
-              <option value="Admin">Admin</option>
               <option value="Employee">Employee</option>
               <option value="Patient">Patient</option>
             </select>
