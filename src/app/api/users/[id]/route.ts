@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import connectDB from "@/lib/connectDB";
 import User from "@/models/User";
 import { auth } from "@/auth";
-import { Roles } from "@/constants/Roles";
+import { Roles } from "@/lib/roles";
 import mongoose from "mongoose";
 
 // PATCH - Admin only
