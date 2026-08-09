@@ -52,7 +52,7 @@ const Page = () => {
     schedule && schedule.days.includes(selectedDay) ? schedule.slots : [];
 
   const myAppointments = bookedAppointment.filter(
-    (item) => item.patient.name === session?.user?.name
+    (item) => item.patient?.name === session?.user?.name
   );
 
   const bookedSlots = bookedAppointment

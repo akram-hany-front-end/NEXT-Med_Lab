@@ -1,6 +1,7 @@
 import connectDB from "@/lib/connectDB";
 import Appointment from "@/models/Appointment";
 import Result from "@/models/Result";
+import Test from "@/models/Test";
 import { NextResponse } from "next/server";
 import mongoose from "mongoose";
 import { auth } from "@/auth";
@@ -9,24 +10,38 @@ export async function GET() {
   try {
     await connectDB();
 
+const session = await auth();
 
-    const results = await Result.find()
-      .populate("patient", "name email")
-      .populate("employee", "name")
-      .populate({
-        path: "appointment",
-        populate: [
-          {
-            path: "patient",
-            select: "name email",
-          },
-          {
-            path: "test",
-            select: "testName price",
-          },
-        ],
-      })
-      .sort({ createdAt: -1 });
+if (!session?.user?.id) {
+  return NextResponse.json(
+    { message: "Unauthorized" },
+    { status: 401 }
+  );
+}
+
+
+   const results = await Result.find({
+  patient: session.user.id,
+})
+  .populate("patient", "name email")
+  .populate("employee", "name")
+  .populate({
+    path: "appointment",
+    populate: [
+      {
+        path: "patient",
+        select: "name email",
+      },
+      {
+        path: "test",
+        select: "testName price",  
+        model: Test,
+
+      },
+    ],
+  })
+  .sort({ createdAt: -1 });
+
 
     return NextResponse.json(
       {

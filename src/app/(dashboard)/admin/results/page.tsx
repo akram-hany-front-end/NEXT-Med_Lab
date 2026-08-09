@@ -77,6 +77,7 @@ const Page = () => {
     const data = await res.json();
     setResults(data.results);
   };
+    // GET appointments from API
 
   const fetchedAppointments = async () => {
     const res = await fetch("/api/appointments");
@@ -279,7 +280,8 @@ const Page = () => {
                     {appointment.patient?.name ||
                       appointment.patientName ||
                       "Unknown Patient"}{" "}
-                    - {appointment.test.testName} -{new Date(appointment.date).toLocaleDateString("en-GB")} -{" "}
+                    - {appointment.test.testName} -
+                    {new Date(appointment.date).toLocaleDateString("en-GB")} -{" "}
                     {appointment.time}
                   </option>
                 ))}
@@ -345,10 +347,10 @@ const Page = () => {
               currentResults.map((result) => (
                 <tr key={result._id} className="border-b">
                   <td className="p-3">
-                  {result.patient?.name ||
-  result.appointment?.patient?.name ||
-  result.appointment?.patientName ||
-  "Unknown Patient"}
+                    {result.patient?.name ||
+                      result.appointment?.patient?.name ||
+                      result.appointment?.patientName ||
+                      "Unknown Patient"}
                   </td>
                   <td className="p-3">{result.appointment.test.testName}</td>
 
