@@ -5,43 +5,47 @@ import Test from "@/models/Test";
 import { NextResponse } from "next/server";
 import mongoose from "mongoose";
 import { auth } from "@/auth";
-// GET ALL RESULTS
+// GET RESULTS
 export async function GET() {
   try {
     await connectDB();
 
-const session = await auth();
+    const session = await auth();
 
-if (!session?.user?.id) {
-  return NextResponse.json(
-    { message: "Unauthorized" },
-    { status: 401 }
-  );
-}
+    if (!session?.user?.id) {
+      return NextResponse.json(
+        { message: "Unauthorized" },
+        { status: 401 }
+      );
+    }
 
+    const role = session.user.role;
 
-   const results = await Result.find({
-  patient: session.user.id,
-})
-  .populate("patient", "name email")
-  .populate("employee", "name")
-  .populate({
-    path: "appointment",
-    populate: [
-      {
-        path: "patient",
-        select: "name email",
-      },
-      {
-        path: "test",
-        select: "testName price",  
-        model: Test,
+    // Admin & Employee → see all results
+    // Patient → see only their own results
+    const query =
+      role === "Admin" || role === "Employee"
+        ? {}
+        : { patient: session.user.id };
 
-      },
-    ],
-  })
-  .sort({ createdAt: -1 });
-
+    const results = await Result.find(query)
+      .populate("patient", "name email")
+      .populate("employee", "name")
+      .populate({
+        path: "appointment",
+        populate: [
+          {
+            path: "patient",
+            select: "name email",
+          },
+          {
+            path: "test",
+            select: "testName price",
+            model: Test,
+          },
+        ],
+      })
+      .sort({ createdAt: -1 });
 
     return NextResponse.json(
       {
@@ -49,10 +53,10 @@ if (!session?.user?.id) {
       },
       {
         status: 200,
-      },
+      }
     );
   } catch (error) {
-    console.error(error);
+    console.error("GET RESULTS ERROR:", error);
 
     return NextResponse.json(
       {
@@ -60,10 +64,12 @@ if (!session?.user?.id) {
       },
       {
         status: 500,
-      },
+      }
     );
   }
 }
+
+
 
 // CREATE RESULT
 export async function POST(request: Request) {
@@ -77,16 +83,16 @@ export async function POST(request: Request) {
         { status: 401 }
       );
     }
-        const employee = session.user.id;
+    const employee = session.user.id;
 
-     const {
+    const {
       appointment,
       result,
       comment,
     } = await request.json();
 
     // Validation
-   
+
     if (!appointment || !result) {
       return NextResponse.json(
         {
@@ -144,13 +150,13 @@ export async function POST(request: Request) {
     }
 
     // Create result
-  const newResult = await Result.create({
-  appointment,
-  patient: appointmentData.patient,
-  employee,
-  result,
-  comment: comment || "",
-});
+    const newResult = await Result.create({
+      appointment,
+      patient: appointmentData.patient,
+      employee,
+      result,
+      comment: comment || "",
+    });
 
     // Populate response
     await newResult.populate([
